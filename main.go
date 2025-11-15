@@ -52,12 +52,26 @@ func main() {
 	api := router.Group("/api")
 	api.GET("/test", testHandler)
 
-	api.POST("/users", apiKeyMiddleware(expectedApiKey), handlers.CreateHandler(handlers.CreateUser, db))
+	api.POST("/users", apiKeyMiddleware(expectedApiKey), handlers.CreateHandler(database.CreateUser, db))
 	api.Use(apiKeyMiddleware(expectedApiKey), AuthMiddleware([]byte(expectedJwtSecret)))
 	{
-		api.GET("/users/:id", handlers.GetHandler(handlers.GetUser, db))
-		api.PUT("/users/:id", handlers.UpdateHandler(handlers.UpdateUser, db))
-		api.DELETE("/users/:id", handlers.DeleteHandler(handlers.DeleteUser, db))
+		api.GET("/users/:id", handlers.GetHandler(database.GetUser, db))
+		api.PUT("/users/:id", handlers.UpdateHandler(database.UpdateUser, db))
+		api.DELETE("/users/:id", handlers.DeleteHandler(database.DeleteUser, db))
+
+		api.GET("/statements/:id", handlers.GetHandler(database.GetStatement, db))
+		api.GET("/statements/user/:id", handlers.GetHandler(database.GetStatementsByUserId, db))
+		api.POST("/statements", handlers.CreateHandler(database.CreateStatement, db))
+		api.PUT("/statements/:id", handlers.UpdateHandler(database.UpdateStatement, db))
+		api.DELETE("/statements/:id", handlers.DeleteHandler(database.DeleteStatement, db))
+
+		api.GET("/transactions/:id", handlers.GetHandler(database.GetTransaction, db))
+		api.GET("/transactions/statement/:id", handlers.GetHandler(database.GetTransactionsByStatementId, db))
+		api.GET("/transactions/user/:id", handlers.GetHandler(database.GetTransactionsByUserId, db))
+		api.POST("/transactions", handlers.CreateHandler(database.CreateTransaction, db))
+		api.POST("/transactions/batch", handlers.CreateBatchHandler(database.CreateTransactionsBatch, db))
+		api.PUT("/transactions/:id", handlers.UpdateHandler(database.UpdateTransaction, db))
+		api.DELETE("/transactions/:id", handlers.DeleteHandler(database.DeleteStatement, db))
 	}
 
 	log.Print("Setup complete...")

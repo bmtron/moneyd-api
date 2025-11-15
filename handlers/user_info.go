@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"database/sql"
+	"moneyd/api/database"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -9,7 +10,7 @@ import (
 func GetUserInfoHandler(db *sql.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID := c.GetInt("user_id")
-		user, err := GetUser(userID, db)
+		user, err := database.GetUser(userID, db)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch user"})
 			return

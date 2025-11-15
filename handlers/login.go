@@ -10,6 +10,7 @@ import (
 	"database/sql"
 	"os"
 	"github.com/joho/godotenv"
+	"moneyd/api/database"
 )
 
 type UserResponse struct {
@@ -30,7 +31,7 @@ func LoginHandler(db *sql.DB) gin.HandlerFunc {
 			return
 		}
 
-		user, err := GetUserByEmail(loginRequest.Email, db)
+		user, err := database.GetUserByEmail(loginRequest.Email, db)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "User not found"})
 			return

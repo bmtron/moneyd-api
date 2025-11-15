@@ -32,12 +32,16 @@ func DeleteHandler[T any](deleteFunc func(itemId int, db *sql.DB) (T, error), db
 func CreateHandler[T any](createFunc func(model T, db *sql.DB) (T, error), db *sql.DB) gin.HandlerFunc {
     	return func(c *gin.Context) {
         var model T
+		log.Print("Beginning JSON parse...")
 		if err := c.BindJSON(&model); err != nil {
 			log.Print(err)
 			c.IndentedJSON(http.StatusInternalServerError, err)
 			return
 		}
 
+		log.Print(&model)
+
+		log.Print("beginning db call...")
 		result, dbErr := createFunc(model, db)
 		if dbErr != nil {
 			log.Print(dbErr)
@@ -85,6 +89,26 @@ func UpdateBatchHandler[T any](updateFunc func(models []T, db *sql.DB) ([]T, err
         c.IndentedJSON(http.StatusOK, updatedModels)
     }
 }
+
+func CreateBatchHandler[T any](createBatchFunc func(models []T, db *sql.DB) ([]T, error), db *sql.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var models []T
+		if err := c.BindJSON(&models); err != nil {
+			log.Print(err)
+			c.IndentedJSON(http.StatusInternalServerError, err)
+			return
+		}
+		createdModels, dbErr := createBatchFunc(models, db)
+		if dbErr != nil {
+			log.Print(dbErr)
+			c.IndentedJSON(http.StatusInternalServerError, dbErr)
+			return
+		}
+
+		c.IndentedJSON(http.StatusOK, createdModels)
+	}
+}
+
 
 func UpdateHandler[T any](updateFunc func(id int, model T, db *sql.DB) (T, error), db *sql.DB) gin.HandlerFunc {
     return func(c *gin.Context) {
