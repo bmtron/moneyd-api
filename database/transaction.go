@@ -251,3 +251,48 @@ func DeleteTransaction(transactionId int, db *sql.DB) (Transaction, error) {
 	}
 	return txn, nil
 }
+
+func GetTransactionsByInstitutionId(db *sql.DB, args []int) ([]Transaction, error) {
+	userId := args[0]
+	institutionId := args[1]
+	var txns []Transaction
+	query := `
+	SELECT t.transaction_id, t.statement_id, t.description, (t.amount * 100)::INTEGER, t.transaction_date, t.date_added, t.date_updated
+		FROM transaction t
+		JOIN statement s on s.statement_id = t.statement_id
+		WHERE s.banking_user_id = $1
+		AND s.institution_id = $2;
+		`
+	rows, err := db.Query(
+		query,
+		userId,
+		institutionId,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var txn Transaction
+		if err := rows.Scan(
+			&txn.TransactionId,
+			&txn.StatementId,
+			&txn.Description,
+			&txn.Amount,
+			&txn.TransactionDate,
+			&txn.DateAdded,
+			&txn.DateUpdated,
+		); err != nil {
+			return txns, err
+		}
+		txns = append(txns, txn)
+	}
+
+	if err = rows.Err(); err != nil {
+		return txns, nil
+	}
+
+	return txns, nil
+
+}

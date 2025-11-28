@@ -14,9 +14,9 @@ import (
 )
 
 type UserResponse struct {
-	Id       int
-	Email    string
-	Username string
+	Id       int	`json:"id"`
+	Email    string `json:"email"`
+	Username string `json:"username"`
 }
 
 func LoginHandler(db *sql.DB) gin.HandlerFunc {

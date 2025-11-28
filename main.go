@@ -25,7 +25,7 @@ func main() {
 	db = database.SetupDb()
 	router := gin.Default()
 
-	router.Use(gin.Logger())
+	//router.Use(gin.Logger())
 
 	config := cors.DefaultConfig()
 	err := godotenv.Load()
@@ -41,6 +41,7 @@ func main() {
 	config.AllowMethods = []string{"GET", "POST", "PATCH", "DELETE", "OPTIONS"}
 	config.AllowHeaders = []string{"Origin", "Content-Type", "Accept", "Authorization", "X-API-Key"}
 	router.Use(cors.New(config))
+
 	router.Use(func(c *gin.Context) {
 		fmt.Printf("Request origin: %s\n", c.Request.Header.Get("Origin"))
 		c.Next()
@@ -68,6 +69,7 @@ func main() {
 		api.GET("/transactions/:id", handlers.GetHandler(database.GetTransaction, db))
 		api.GET("/transactions/statement/:id", handlers.GetHandler(database.GetTransactionsByStatementId, db))
 		api.GET("/transactions/user/:id", handlers.GetHandler(database.GetTransactionsByUserId, db))
+		api.GET("/transactions/by_institution/user/:id1/institution/:id2", handlers.GetHandlerIndeterminiteArgs(database.GetTransactionsByInstitutionId, db, 2))
 		api.POST("/transactions", handlers.CreateHandler(database.CreateTransaction, db))
 		api.POST("/transactions/batch", handlers.CreateBatchHandler(database.CreateTransactionsBatch, db))
 		api.PUT("/transactions/:id", handlers.UpdateHandler(database.UpdateTransaction, db))
