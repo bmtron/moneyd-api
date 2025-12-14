@@ -54,6 +54,9 @@ func main() {
 	api.GET("/test", testHandler)
 
 	api.POST("/users", apiKeyMiddleware(expectedApiKey), handlers.CreateHandler(database.CreateUser, db))
+	// TODO: Ensure userid and data that is attempting to be accessed matches the data of the JWT
+	// otherwise User 1 with a valid JWT could theoretically target an endpoint with a random
+	// user id and get that info returned to them
 	api.Use(apiKeyMiddleware(expectedApiKey), AuthMiddleware([]byte(expectedJwtSecret)))
 	{
 		api.GET("/users/:id", handlers.GetHandler(database.GetUser, db))
