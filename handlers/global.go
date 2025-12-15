@@ -179,6 +179,8 @@ func GetHandlerByUserIdAuthorized[T any](getFunc func(userId int, authenticatedU
 			return
 		}
 
+		log.Print("Requested id: ", requestedUserId);
+		log.Print("Authenticated id: ", authenticatedUserID);
 		// Validate that the requested user_id matches the authenticated user
 		if requestedUserIdInt != authenticatedUserID.(int) {
 			c.IndentedJSON(http.StatusForbidden, gin.H{"error": "Access denied: cannot access other users' data"})

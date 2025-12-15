@@ -12,7 +12,6 @@ import (
 	"moneyd/api/handlers"
 	"net/http"
 	"os"
-	"strconv"
 	"time"
 	"strings"
 )
@@ -101,47 +100,8 @@ func apiKeyMiddleware(expectedApiKey string) gin.HandlerFunc {
 		c.Next()
 	}
 }
+
 func AuthMiddleware(jwtSecret []byte) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		authHeader := c.GetHeader("Authorization")
-		if authHeader == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header required"})
-			c.Abort()
-			return
-		}
-
-		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-
-		token, err := jwt.ParseWithClaims(tokenString, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
-			// Enforce HS256
-			if token.Method != jwt.SigningMethodHS256 {
-				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-			}
-			return jwtSecret, nil
-		})
-
-		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
-			c.Abort()
-			return
-		}
-
-		claims := token.Claims.(*jwt.RegisteredClaims)
-
-		// Check expiration
-		if claims.ExpiresAt != nil && claims.ExpiresAt.Before(time.Now()) {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Token expired"})
-			c.Abort()
-			return
-		}
-
-		userID, _ := strconv.Atoi(claims.Subject)
-		c.Set("user_id", userID)
-
-		c.Next()
-	}
-}
-func authMiddleware_old(expectedJwtSecret string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
@@ -156,7 +116,7 @@ func authMiddleware_old(expectedJwtSecret string) gin.HandlerFunc {
 			if token.Method != jwt.SigningMethodHS256 {
 				return nil, fmt.Errorf("unexpected signing method %v", token.Header["alg"])
 			}
-			return []byte(expectedJwtSecret), nil
+			return jwtSecret, nil
 		})
 
 		if err != nil || !token.Valid {
@@ -172,6 +132,19 @@ func authMiddleware_old(expectedJwtSecret string) gin.HandlerFunc {
 			return
 		}
 
+		expiration, ok := claims["exp"].(float64)
+
+		if !ok {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid expiration claim"})
+			c.Abort()
+			return
+		}
+
+		if time.Now().Unix() > int64(expiration) {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Token expired"})
+			c.Abort()
+			return
+		}
 		userID := int(claims["user_id"].(float64))
 		c.Set("user_id", userID)
 		c.Next()
