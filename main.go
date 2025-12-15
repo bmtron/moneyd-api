@@ -54,29 +54,27 @@ func main() {
 	api.GET("/test", testHandler)
 
 	api.POST("/users", apiKeyMiddleware(expectedApiKey), handlers.CreateHandler(database.CreateUser, db))
-	// TODO: Ensure userid and data that is attempting to be accessed matches the data of the JWT
-	// otherwise User 1 with a valid JWT could theoretically target an endpoint with a random
-	// user id and get that info returned to them
+	// Authorization checks implemented - users can only access their own data
 	api.Use(apiKeyMiddleware(expectedApiKey), AuthMiddleware([]byte(expectedJwtSecret)))
 	{
-		api.GET("/users/:id", handlers.GetHandler(database.GetUser, db))
-		api.PUT("/users/:id", handlers.UpdateHandler(database.UpdateUser, db))
-		api.DELETE("/users/:id", handlers.DeleteHandler(database.DeleteUser, db))
+		api.GET("/users/:id", handlers.GetHandlerAuthorized(database.GetUserAuthorized, db))
+		api.PUT("/users/:id", handlers.UpdateHandlerAuthorized(database.UpdateUserAuthorized, db))
+		api.DELETE("/users/:id", handlers.DeleteHandlerAuthorized(database.DeleteUserAuthorized, db))
 
-		api.GET("/statements/:id", handlers.GetHandler(database.GetStatement, db))
-		api.GET("/statements/user/:id", handlers.GetHandler(database.GetStatementsByUserId, db))
-		api.POST("/statements", handlers.CreateHandler(database.CreateStatement, db))
-		api.PUT("/statements/:id", handlers.UpdateHandler(database.UpdateStatement, db))
-		api.DELETE("/statements/:id", handlers.DeleteHandler(database.DeleteStatement, db))
+		api.GET("/statements/:id", handlers.GetHandlerAuthorized(database.GetStatementAuthorized, db))
+		api.GET("/statements/user/:id", handlers.GetHandlerByUserIdAuthorized(database.GetStatementsByUserIdAuthorized, db))
+		api.POST("/statements", handlers.CreateHandlerAuthorized(database.CreateStatementAuthorized, db))
+		api.PUT("/statements/:id", handlers.UpdateHandlerAuthorized(database.UpdateStatementAuthorized, db))
+		api.DELETE("/statements/:id", handlers.DeleteHandlerAuthorized(database.DeleteStatementAuthorized, db))
 
-		api.GET("/transactions/:id", handlers.GetHandler(database.GetTransaction, db))
-		api.GET("/transactions/statement/:id", handlers.GetHandler(database.GetTransactionsByStatementId, db))
-		api.GET("/transactions/user/:id", handlers.GetHandler(database.GetTransactionsByUserId, db))
-		api.GET("/transactions/by_institution/user/:id1/institution/:id2", handlers.GetHandlerIndeterminiteArgs(database.GetTransactionsByInstitutionId, db, 2))
-		api.POST("/transactions", handlers.CreateHandler(database.CreateTransaction, db))
-		api.POST("/transactions/batch", handlers.CreateBatchHandler(database.CreateTransactionsBatch, db))
-		api.PUT("/transactions/:id", handlers.UpdateHandler(database.UpdateTransaction, db))
-		api.DELETE("/transactions/:id", handlers.DeleteHandler(database.DeleteStatement, db))
+		api.GET("/transactions/:id", handlers.GetHandlerAuthorized(database.GetTransactionAuthorized, db))
+		api.GET("/transactions/statement/:id", handlers.GetHandlerAuthorized(database.GetTransactionsByStatementIdAuthorized, db))
+		api.GET("/transactions/user/:id", handlers.GetHandlerByUserIdAuthorized(database.GetTransactionsByUserIdAuthorized, db))
+		api.GET("/transactions/by_institution/user/:id1/institution/:id2", handlers.GetHandlerIndeterminiteArgsAuthorized(database.GetTransactionsByInstitutionIdAuthorized, db, 2, 0))
+		api.POST("/transactions", handlers.CreateHandlerAuthorized(database.CreateTransactionAuthorized, db))
+		api.POST("/transactions/batch", handlers.CreateBatchHandlerAuthorized(database.CreateTransactionsBatchAuthorized, db))
+		api.PUT("/transactions/:id", handlers.UpdateHandlerAuthorized(database.UpdateTransactionAuthorized, db))
+		api.DELETE("/transactions/:id", handlers.DeleteHandlerAuthorized(database.DeleteTransactionAuthorized, db))
 	}
 
 	log.Print("Setup complete...")

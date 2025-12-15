@@ -47,6 +47,14 @@ func GetUser(userID int, db *sql.DB) (User, error) {
 	return user, nil
 }
 
+// GetUserAuthorized retrieves a user only if the authenticated user matches
+func GetUserAuthorized(userID int, authenticatedUserID int, db *sql.DB) (User, error) {
+	if userID != authenticatedUserID {
+		return User{}, sql.ErrNoRows
+	}
+	return GetUser(userID, db)
+}
+
 func GetUserByEmail(email string, db *sql.DB) (User, error) {
 	var user User
 	query := `
@@ -80,6 +88,14 @@ func UpdateUser(userID int, updatedUser User, db *sql.DB) (User, error) {
 	return updatedUser, nil
 }
 
+// UpdateUserAuthorized updates a user only if the authenticated user matches
+func UpdateUserAuthorized(userID int, updatedUser User, authenticatedUserID int, db *sql.DB) (User, error) {
+	if userID != authenticatedUserID {
+		return User{}, sql.ErrNoRows
+	}
+	return UpdateUser(userID, updatedUser, db)
+}
+
 func DeleteUser(userID int, db *sql.DB) (User, error) {
 	query := `
         DELETE FROM banking_user
@@ -94,5 +110,13 @@ func DeleteUser(userID int, db *sql.DB) (User, error) {
 	}
 
 	return deletedUser, nil
+}
+
+// DeleteUserAuthorized deletes a user only if the authenticated user matches
+func DeleteUserAuthorized(userID int, authenticatedUserID int, db *sql.DB) (User, error) {
+	if userID != authenticatedUserID {
+		return User{}, sql.ErrNoRows
+	}
+	return DeleteUser(userID, db)
 }
 
