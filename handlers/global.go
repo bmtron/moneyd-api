@@ -179,8 +179,8 @@ func GetHandlerByUserIdAuthorized[T any](getFunc func(userId int, authenticatedU
 			return
 		}
 
-		log.Print("Requested id: ", requestedUserId);
-		log.Print("Authenticated id: ", authenticatedUserID);
+		log.Print("Requested id: ", requestedUserId)
+		log.Print("Authenticated id: ", authenticatedUserID)
 		// Validate that the requested user_id matches the authenticated user
 		if requestedUserIdInt != authenticatedUserID.(int) {
 			c.IndentedJSON(http.StatusForbidden, gin.H{"error": "Access denied: cannot access other users' data"})
@@ -206,7 +206,7 @@ func GetHandlerIndeterminiteArgsAuthorized[T any](getFunc func(db *sql.DB, args 
 	return func(c *gin.Context) {
 		finalArgs := []int{}
 		for i := range argcount {
-			tempId := c.Param("id" + strconv.Itoa(i + 1))
+			tempId := c.Param("id" + strconv.Itoa(i+1))
 			tempIdInt, err := strconv.Atoi(tempId)
 			if err != nil {
 				log.Print(err)
@@ -293,10 +293,10 @@ func CreateHandler[T any](createFunc func(model T, db *sql.DB) (T, error), db *s
 
 func GetHandlerIndeterminiteArgs[T any](getFunc func(db *sql.DB, args []int) (T, error), db *sql.DB, argcount int) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		
+
 		finalArgs := []int{}
 		for i := range argcount {
-			tempId := c.Param("id" + strconv.Itoa(i + 1))
+			tempId := c.Param("id" + strconv.Itoa(i+1))
 			tempIdInt, err := strconv.Atoi(tempId)
 			if err != nil {
 				log.Print(err)
@@ -312,7 +312,20 @@ func GetHandlerIndeterminiteArgs[T any](getFunc func(db *sql.DB, args []int) (T,
 			return
 		}
 
-		c.IndentedJSON(http.StatusOK, item);
+		c.IndentedJSON(http.StatusOK, item)
+	}
+}
+
+func GetGenericHandler[T any](getFunc func(db *sql.DB) (T, error), db *sql.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+
+		item, dbErr := getFunc(db)
+		if dbErr != nil {
+			log.Print(dbErr)
+			c.IndentedJSON(http.StatusInternalServerError, dbErr)
+			return
+		}
+		c.IndentedJSON(http.StatusOK, item)
 	}
 }
 

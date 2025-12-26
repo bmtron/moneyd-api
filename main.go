@@ -36,15 +36,15 @@ func main() {
 	expectedJwtSecret := os.Getenv("JWT_SECRET")
 	expectedApiKey := os.Getenv("API_KEY")
 
-	config.AllowOrigins = []string{"http://localhost:8085"}
+	config.AllowOrigins = []string{"http://localhost:8085", 
+	"http://192.168.1.54", 
+	"http://127.0.0.1",
+	"http://localhost:5173"}
 	config.AllowMethods = []string{"GET", "POST", "PATCH", "DELETE", "OPTIONS"}
 	config.AllowHeaders = []string{"Origin", "Content-Type", "Accept", "Authorization", "X-API-Key"}
 	router.Use(cors.New(config))
 
-	router.Use(func(c *gin.Context) {
-		fmt.Printf("Request origin: %s\n", c.Request.Header.Get("Origin"))
-		c.Next()
-	})
+//	router.POST("/test/genhash", handlers.HashTest())
 
 	router.POST("/auth/login", apiKeyMiddleware(expectedApiKey), handlers.LoginHandler(db))
 	router.GET("/auth/me", apiKeyMiddleware(expectedApiKey), AuthMiddleware([]byte(expectedJwtSecret)), handlers.GetUserInfoHandler(db))
@@ -74,8 +74,12 @@ func main() {
 		api.POST("/transactions/batch", handlers.CreateBatchHandlerAuthorized(database.CreateTransactionsBatchAuthorized, db))
 		api.PUT("/transactions/:id", handlers.UpdateHandlerAuthorized(database.UpdateTransactionAuthorized, db))
 		api.DELETE("/transactions/:id", handlers.DeleteHandlerAuthorized(database.DeleteTransactionAuthorized, db))
-	}
 
+		api.GET("/institutions", handlers.GetGenericHandler(database.GetInstitutions, db))
+		api.GET("/transactiontypes", handlers.GetGenericHandler(database.GetTransactionTypes, db))
+
+	}
+ 
 	log.Print("Setup complete...")
 	log.Print("Running...")
 

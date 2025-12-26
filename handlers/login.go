@@ -11,12 +11,29 @@ import (
 	"os"
 	"github.com/joho/godotenv"
 	"moneyd/api/database"
+	"moneyd/api/utils"
 )
 
 type UserResponse struct {
 	Id       int	`json:"id"`
 	Email    string `json:"email"`
 	Username string `json:"username"`
+}
+
+func HashTest() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var pass struct {
+			Password string `json:"password" binding:"required"`
+		}
+
+		if err := c.ShouldBindJSON(&pass); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+			return
+		}
+
+		hashed := utils.PasswordHasher(pass.Password);
+		c.JSON(http.StatusOK, gin.H{ "hashed": hashed })
+	}
 }
 
 func LoginHandler(db *sql.DB) gin.HandlerFunc {
@@ -32,6 +49,7 @@ func LoginHandler(db *sql.DB) gin.HandlerFunc {
 		}
 
 		user, err := database.GetUserByEmail(loginRequest.Email, db)
+		log.Print(user);
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "User not found"})
 			return
